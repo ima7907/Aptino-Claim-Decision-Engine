@@ -27,6 +27,7 @@ class DecisionAgent:
         continuous_coverage_months: int,
         pre_existing_confirmed: Optional[bool] = None,
         previous_coverage_verified: bool = False,
+        experimental: bool = False,
     ) -> Dict:
         """
         Make a preliminary claim decision.
@@ -46,18 +47,19 @@ class DecisionAgent:
             Amount claimed by the policyholder.
 
         continuous_coverage_months:
-            Number of months of continuous coverage under
-            the current policy.
+            Number of months of continuous coverage.
 
         pre_existing_confirmed:
             Whether the available medical documentation has
             confirmed that the condition is pre-existing.
 
-            None means the status has not yet been verified.
-
         previous_coverage_verified:
             Whether previous continuous insurance coverage
-            has been verified for possible policy exceptions.
+            has been verified.
+
+        experimental:
+            Whether the treatment is identified as experimental
+            or unproven in the claim information.
 
         Returns
         -------
@@ -102,7 +104,7 @@ class DecisionAgent:
 
         evidence: List[Dict] = policy_analysis.get(
             "evidence",
-            []
+            [],
         )
 
         evidence_text = " ".join(
@@ -133,6 +135,11 @@ class DecisionAgent:
             in evidence_text
             or "portability"
             in evidence_text
+        )
+
+        contains_experimental_rule = (
+            "experimental" in evidence_text
+            or "unproven" in evidence_text
         )
 
         # ---------------------------------------------------------
@@ -185,10 +192,30 @@ class DecisionAgent:
 
         # ---------------------------------------------------------
         # CASE A:
+        # Experimental / unproven treatment
+        # ---------------------------------------------------------
+
+        if experimental:
+            reason = (
+                "The claim identifies the treatment as experimental "
+                "or unproven. The retrieved policy evidence should "
+                "be reviewed for the applicable exclusion before a "
+                "final claim decision is made."
+            )
+
+            review_flags.append(
+                "Experimental or unproven treatment identified; "
+                "policy exclusion requires verification."
+            )
+
+            confidence = 0.85
+
+        # ---------------------------------------------------------
+        # CASE B:
         # Pre-existing condition confirmed AND coverage < 48 months
         # ---------------------------------------------------------
 
-        if (
+        elif (
             pre_existing_confirmed is True
             and contains_pre_existing_rule
             and contains_48_month_rule
@@ -209,7 +236,7 @@ class DecisionAgent:
             confidence = 0.90
 
         # ---------------------------------------------------------
-        # CASE B:
+        # CASE C:
         # Pre-existing condition confirmed AND coverage >= 48 months
         # ---------------------------------------------------------
 
@@ -233,7 +260,7 @@ class DecisionAgent:
             confidence = 0.85
 
         # ---------------------------------------------------------
-        # CASE C:
+        # CASE D:
         # Pre-existing status is unknown
         # ---------------------------------------------------------
 
@@ -255,7 +282,7 @@ class DecisionAgent:
             confidence = 0.75
 
         # ---------------------------------------------------------
-        # CASE D:
+        # CASE E:
         # Policy evidence is insufficient
         # ---------------------------------------------------------
 
@@ -314,6 +341,7 @@ class DecisionAgent:
                 "previous_coverage_verified": (
                     previous_coverage_verified
                 ),
+                "experimental": experimental,
             },
         }
 
@@ -330,6 +358,7 @@ if __name__ == "__main__":
         continuous_coverage_months=24,
         pre_existing_confirmed=True,
         previous_coverage_verified=False,
+        experimental=False,
     )
 
     print()
