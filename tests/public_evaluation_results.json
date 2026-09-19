@@ -1,0 +1,469 @@
+{
+  "total_cases": 12,
+  "http_successful_cases": 12,
+  "decision_matches": 12,
+  "decision_accuracy": 1.0,
+  "citation_supported_cases": 12,
+  "citation_hit_rate": 1.0,
+  "needs_review_cases": 12,
+  "abstention_rate": 1.0,
+  "http_success_rate": 1.0,
+  "results": [
+    {
+      "case_id": "PUB-001",
+      "status": "PASS",
+      "http_status": 200,
+      "decision": "NEEDS_REVIEW",
+      "expected_decision": "NEEDS_REVIEW",
+      "confidence": 0.9,
+      "decision_match": true,
+      "citation_found": true,
+      "retrieval_count": 5,
+      "policy_evidence": [
+        {
+          "chunk_id": "chunk_29",
+          "page_number": 8,
+          "relevance_score": 0.441932700603969
+        },
+        {
+          "chunk_id": "chunk_17",
+          "page_number": 5,
+          "relevance_score": 0.39452461799660443
+        },
+        {
+          "chunk_id": "chunk_18",
+          "page_number": 5,
+          "relevance_score": 0.33476383265856946
+        },
+        {
+          "chunk_id": "chunk_9",
+          "page_number": 3,
+          "relevance_score": 0.32343358395989974
+        },
+        {
+          "chunk_id": "chunk_35",
+          "page_number": 9,
+          "relevance_score": 0.3134594298245614
+        }
+      ]
+    },
+    {
+      "case_id": "PUB-002",
+      "status": "PASS",
+      "http_status": 200,
+      "decision": "NEEDS_REVIEW",
+      "expected_decision": "NEEDS_REVIEW",
+      "confidence": 0.9,
+      "decision_match": true,
+      "citation_found": true,
+      "retrieval_count": 5,
+      "policy_evidence": [
+        {
+          "chunk_id": "chunk_29",
+          "page_number": 8,
+          "relevance_score": 0.444276450603969
+        },
+        {
+          "chunk_id": "chunk_17",
+          "page_number": 5,
+          "relevance_score": 0.39452461799660443
+        },
+        {
+          "chunk_id": "chunk_18",
+          "page_number": 5,
+          "relevance_score": 0.33476383265856946
+        },
+        {
+          "chunk_id": "chunk_9",
+          "page_number": 3,
+          "relevance_score": 0.3256394663128409
+        },
+        {
+          "chunk_id": "chunk_35",
+          "page_number": 9,
+          "relevance_score": 0.3133544857947106
+        }
+      ]
+    },
+    {
+      "case_id": "PUB-003",
+      "status": "PASS",
+      "http_status": 200,
+      "decision": "NEEDS_REVIEW",
+      "expected_decision": "NEEDS_REVIEW",
+      "confidence": 0.9,
+      "decision_match": true,
+      "citation_found": true,
+      "retrieval_count": 5,
+      "policy_evidence": [
+        {
+          "chunk_id": "chunk_29",
+          "page_number": 8,
+          "relevance_score": 0.4476238515582778
+        },
+        {
+          "chunk_id": "chunk_17",
+          "page_number": 5,
+          "relevance_score": 0.38099078341013826
+        },
+        {
+          "chunk_id": "chunk_18",
+          "page_number": 5,
+          "relevance_score": 0.34251082251082254
+        },
+        {
+          "chunk_id": "chunk_35",
+          "page_number": 9,
+          "relevance_score": 0.31901041666666663
+        },
+        {
+          "chunk_id": "chunk_9",
+          "page_number": 3,
+          "relevance_score": 0.31666666666666665
+        }
+      ]
+    },
+    {
+      "case_id": "PUB-004",
+      "status": "PASS",
+      "http_status": 200,
+      "decision": "NEEDS_REVIEW",
+      "expected_decision": "NEEDS_REVIEW",
+      "confidence": 0.9,
+      "decision_match": true,
+      "citation_found": true,
+      "retrieval_count": 5,
+      "policy_evidence": [
+        {
+          "chunk_id": "chunk_29",
+          "page_number": 8,
+          "relevance_score": 0.3287685402029664
+        },
+        {
+          "chunk_id": "chunk_17",
+          "page_number": 5,
+          "relevance_score": 0.30408602150537634
+        },
+        {
+          "chunk_id": "chunk_18",
+          "page_number": 5,
+          "relevance_score": 0.24314102564102566
+        },
+        {
+          "chunk_id": "chunk_9",
+          "page_number": 3,
+          "relevance_score": 0.23654761904761903
+        },
+        {
+          "chunk_id": "chunk_35",
+          "page_number": 9,
+          "relevance_score": 0.2230580357142857
+        }
+      ]
+    },
+    {
+      "case_id": "PUB-005",
+      "status": "PASS",
+      "http_status": 200,
+      "decision": "NEEDS_REVIEW",
+      "expected_decision": "NEEDS_REVIEW",
+      "confidence": 0.9,
+      "decision_match": true,
+      "citation_found": true,
+      "retrieval_count": 5,
+      "policy_evidence": [
+        {
+          "chunk_id": "chunk_29",
+          "page_number": 8,
+          "relevance_score": 0.43995901639344265
+        },
+        {
+          "chunk_id": "chunk_17",
+          "page_number": 5,
+          "relevance_score": 0.38477229601518026
+        },
+        {
+          "chunk_id": "chunk_52",
+          "page_number": 13,
+          "relevance_score": 0.3603609625668449
+        },
+        {
+          "chunk_id": "chunk_9",
+          "page_number": 3,
+          "relevance_score": 0.33403152305698397
+        },
+        {
+          "chunk_id": "chunk_35",
+          "page_number": 9,
+          "relevance_score": 0.2886262958052073
+        }
+      ]
+    },
+    {
+      "case_id": "PUB-006",
+      "status": "PASS",
+      "http_status": 200,
+      "decision": "NEEDS_REVIEW",
+      "expected_decision": "NEEDS_REVIEW",
+      "confidence": 0.9,
+      "decision_match": true,
+      "citation_found": true,
+      "retrieval_count": 5,
+      "policy_evidence": [
+        {
+          "chunk_id": "chunk_29",
+          "page_number": 8,
+          "relevance_score": 0.44410661364744725
+        },
+        {
+          "chunk_id": "chunk_17",
+          "page_number": 5,
+          "relevance_score": 0.39452461799660443
+        },
+        {
+          "chunk_id": "chunk_18",
+          "page_number": 5,
+          "relevance_score": 0.33472886762360443
+        },
+        {
+          "chunk_id": "chunk_9",
+          "page_number": 3,
+          "relevance_score": 0.325706311232627
+        },
+        {
+          "chunk_id": "chunk_35",
+          "page_number": 9,
+          "relevance_score": 0.31349663220551377
+        }
+      ]
+    },
+    {
+      "case_id": "PUB-007",
+      "status": "PASS",
+      "http_status": 200,
+      "decision": "NEEDS_REVIEW",
+      "expected_decision": "NEEDS_REVIEW",
+      "confidence": 0.9,
+      "decision_match": true,
+      "citation_found": true,
+      "retrieval_count": 5,
+      "policy_evidence": [
+        {
+          "chunk_id": "chunk_29",
+          "page_number": 8,
+          "relevance_score": 0.45466489874638377
+        },
+        {
+          "chunk_id": "chunk_17",
+          "page_number": 5,
+          "relevance_score": 0.4024193548387097
+        },
+        {
+          "chunk_id": "chunk_18",
+          "page_number": 5,
+          "relevance_score": 0.34397435897435896
+        },
+        {
+          "chunk_id": "chunk_9",
+          "page_number": 3,
+          "relevance_score": 0.3273809523809524
+        },
+        {
+          "chunk_id": "chunk_35",
+          "page_number": 9,
+          "relevance_score": 0.321318108974359
+        }
+      ]
+    },
+    {
+      "case_id": "PUB-008",
+      "status": "PASS",
+      "http_status": 200,
+      "decision": "NEEDS_REVIEW",
+      "expected_decision": "NEEDS_REVIEW",
+      "confidence": 0.9,
+      "decision_match": true,
+      "citation_found": true,
+      "retrieval_count": 5,
+      "policy_evidence": [
+        {
+          "chunk_id": "chunk_29",
+          "page_number": 8,
+          "relevance_score": 0.379432700603969
+        },
+        {
+          "chunk_id": "chunk_35",
+          "page_number": 9,
+          "relevance_score": 0.3580922400776531
+        },
+        {
+          "chunk_id": "chunk_17",
+          "page_number": 5,
+          "relevance_score": 0.3557088285229202
+        },
+        {
+          "chunk_id": "chunk_18",
+          "page_number": 5,
+          "relevance_score": 0.31678137651821864
+        },
+        {
+          "chunk_id": "chunk_19",
+          "page_number": 5,
+          "relevance_score": 0.269279176201373
+        }
+      ]
+    },
+    {
+      "case_id": "PUB-009",
+      "status": "PASS",
+      "http_status": 200,
+      "decision": "NEEDS_REVIEW",
+      "expected_decision": "NEEDS_REVIEW",
+      "confidence": 0.9,
+      "decision_match": true,
+      "citation_found": true,
+      "retrieval_count": 5,
+      "policy_evidence": [
+        {
+          "chunk_id": "chunk_29",
+          "page_number": 8,
+          "relevance_score": 0.441932700603969
+        },
+        {
+          "chunk_id": "chunk_17",
+          "page_number": 5,
+          "relevance_score": 0.39452461799660443
+        },
+        {
+          "chunk_id": "chunk_18",
+          "page_number": 5,
+          "relevance_score": 0.33476383265856946
+        },
+        {
+          "chunk_id": "chunk_9",
+          "page_number": 3,
+          "relevance_score": 0.32343358395989974
+        },
+        {
+          "chunk_id": "chunk_35",
+          "page_number": 9,
+          "relevance_score": 0.3134594298245614
+        }
+      ]
+    },
+    {
+      "case_id": "PUB-010",
+      "status": "PASS",
+      "http_status": 200,
+      "decision": "NEEDS_REVIEW",
+      "expected_decision": "NEEDS_REVIEW",
+      "confidence": 0.9,
+      "decision_match": true,
+      "citation_found": true,
+      "retrieval_count": 5,
+      "policy_evidence": [
+        {
+          "chunk_id": "chunk_29",
+          "page_number": 8,
+          "relevance_score": 0.4664296046287368
+        },
+        {
+          "chunk_id": "chunk_17",
+          "page_number": 5,
+          "relevance_score": 0.38477229601518026
+        },
+        {
+          "chunk_id": "chunk_52",
+          "page_number": 13,
+          "relevance_score": 0.3603609625668449
+        },
+        {
+          "chunk_id": "chunk_9",
+          "page_number": 3,
+          "relevance_score": 0.33403152305698397
+        },
+        {
+          "chunk_id": "chunk_35",
+          "page_number": 9,
+          "relevance_score": 0.2886262958052073
+        }
+      ]
+    },
+    {
+      "case_id": "PUB-011",
+      "status": "PASS",
+      "http_status": 200,
+      "decision": "NEEDS_REVIEW",
+      "expected_decision": "NEEDS_REVIEW",
+      "confidence": 0.9,
+      "decision_match": true,
+      "citation_found": true,
+      "retrieval_count": 5,
+      "policy_evidence": [
+        {
+          "chunk_id": "chunk_29",
+          "page_number": 8,
+          "relevance_score": 0.441932700603969
+        },
+        {
+          "chunk_id": "chunk_17",
+          "page_number": 5,
+          "relevance_score": 0.39452461799660443
+        },
+        {
+          "chunk_id": "chunk_18",
+          "page_number": 5,
+          "relevance_score": 0.33476383265856946
+        },
+        {
+          "chunk_id": "chunk_9",
+          "page_number": 3,
+          "relevance_score": 0.32343358395989974
+        },
+        {
+          "chunk_id": "chunk_35",
+          "page_number": 9,
+          "relevance_score": 0.3134594298245614
+        }
+      ]
+    },
+    {
+      "case_id": "PUB-012",
+      "status": "PASS",
+      "http_status": 200,
+      "decision": "NEEDS_REVIEW",
+      "expected_decision": "NEEDS_REVIEW",
+      "confidence": 0.85,
+      "decision_match": true,
+      "citation_found": true,
+      "retrieval_count": 5,
+      "policy_evidence": [
+        {
+          "chunk_id": "chunk_29",
+          "page_number": 8,
+          "relevance_score": 0.3817403929116613
+        },
+        {
+          "chunk_id": "chunk_17",
+          "page_number": 5,
+          "relevance_score": 0.3557088285229202
+        },
+        {
+          "chunk_id": "chunk_18",
+          "page_number": 5,
+          "relevance_score": 0.31678137651821864
+        },
+        {
+          "chunk_id": "chunk_35",
+          "page_number": 9,
+          "relevance_score": 0.27179276315789475
+        },
+        {
+          "chunk_id": "chunk_19",
+          "page_number": 5,
+          "relevance_score": 0.2692481203007519
+        }
+      ]
+    }
+  ]
+}

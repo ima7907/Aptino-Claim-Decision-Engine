@@ -1,14 +1,22 @@
 from datetime import date
-from typing import List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional
 
 from pydantic import BaseModel, Field
 
+
+# ============================================================
+# PATIENT INFORMATION
+# ============================================================
 
 class PatientInfo(BaseModel):
     patient_id: str
     age: int
     gender: Optional[str] = None
 
+
+# ============================================================
+# POLICY INFORMATION
+# ============================================================
 
 class PolicyInfo(BaseModel):
     policy_id: str
@@ -17,23 +25,32 @@ class PolicyInfo(BaseModel):
     continuous_coverage_months: int
 
 
+# ============================================================
+# CLAIM INFORMATION
+# ============================================================
+
 class ClaimInfo(BaseModel):
     claim_id: str
     diagnosis: str
     treatment_type: str
     claimed_amount: float
     hospitalization_days: Optional[int] = None
-
-    # Indicates whether the treatment is identified
-    # as experimental or unproven.
     experimental: bool = False
 
+
+# ============================================================
+# MEDICAL DOCUMENT
+# ============================================================
 
 class MedicalDocument(BaseModel):
     document_id: str
     document_type: str
     document_text: str
 
+
+# ============================================================
+# COMPLETE CLAIM CASE
+# ============================================================
 
 class ClaimCase(BaseModel):
     patient: PatientInfo
@@ -44,12 +61,20 @@ class ClaimCase(BaseModel):
     )
 
 
+# ============================================================
+# POLICY EVIDENCE
+# ============================================================
+
 class PolicyEvidence(BaseModel):
     chunk_id: str
     page_number: int
     text: str
     relevance_score: float
 
+
+# ============================================================
+# FINAL CLAIM DECISION
+# ============================================================
 
 class ClaimDecision(BaseModel):
     claim_id: str
@@ -71,21 +96,18 @@ class ClaimDecision(BaseModel):
     confidence: float
 
     findings: List[str] = Field(
-        default_factory=list,
-        description="Key findings identified during claim analysis",
+        default_factory=list
     )
 
     limitations: List[str] = Field(
-        default_factory=list,
-        description="Known limitations of the automated analysis",
+        default_factory=list
     )
 
     missing_evidence: List[str] = Field(
-        default_factory=list,
-        description="Evidence that should be verified or provided",
+        default_factory=list
     )
 
-    trace: List[str] = Field(
-        default_factory=list,
-        description="High-level processing steps performed by the system",
+    # Structured multi-agent execution trace
+    trace: List[Dict[str, Any]] = Field(
+        default_factory=list
     )

@@ -1,18 +1,50 @@
-from typing import Dict, List
+from typing import Dict
 
 
 class MedicalDocumentAgent:
-    """
-    Agent responsible for analyzing medical document text
-    and extracting information relevant to claim review.
-
-    This is a lightweight prototype. It does not make a
-    medical diagnosis. It identifies relevant evidence that
-    may require verification by a human reviewer.
-    """
-
     def __init__(self):
         print("Initializing Medical Document Agent...")
+
+    def _has_positive_history_evidence(self, text: str, keyword: str) -> bool:
+        """
+        Detect whether a history keyword is used positively.
+
+        Example:
+        "previous history of diabetes" -> True
+
+        But:
+        "no previous history of diabetes" -> False
+        "without previous history of diabetes" -> False
+        "no history of diabetes" -> False
+        """
+        text_lower = text.lower()
+
+        keyword_position = text_lower.find(keyword)
+
+        if keyword_position == -1:
+            return False
+
+        context_start = max(0, keyword_position - 60)
+        context = text_lower[context_start:keyword_position]
+
+        negative_phrases = [
+            "no ",
+            "no previous",
+            "no prior",
+            "without ",
+            "negative for ",
+            "denies ",
+            "denied ",
+            "not ",
+            "none ",
+            "absent ",
+            "never ",
+        ]
+
+        return not any(
+            phrase in context
+            for phrase in negative_phrases
+        )
 
     def analyze_document(
         self,
@@ -20,9 +52,6 @@ class MedicalDocumentAgent:
         claim_diagnosis: str,
         treatment_type: str,
     ) -> Dict:
-        """
-        Analyze medical document text against claim information.
-        """
 
         if not document_text or not document_text.strip():
             return {
@@ -30,6 +59,7 @@ class MedicalDocumentAgent:
                 "diagnosis_match": False,
                 "treatment_match": False,
                 "possible_pre_existing_evidence": False,
+                "matched_pre_existing_terms": [],
                 "evidence": [],
                 "review_flags": [
                     "Medical document text was not provided."
@@ -40,12 +70,12 @@ class MedicalDocumentAgent:
         diagnosis = claim_diagnosis.lower().strip()
         treatment = treatment_type.lower().strip()
 
-        evidence: List[str] = []
-        review_flags: List[str] = []
+        evidence = []
+        review_flags = []
 
-        # ---------------------------------------------------------
-        # 1. Diagnosis matching
-        # ---------------------------------------------------------
+        # --------------------------------------------------------
+        # DIAGNOSIS MATCH
+        # --------------------------------------------------------
 
         diagnosis_match = (
             diagnosis in text
@@ -64,9 +94,9 @@ class MedicalDocumentAgent:
                 "in the medical document."
             )
 
-        # ---------------------------------------------------------
-        # 2. Treatment matching
-        # ---------------------------------------------------------
+        # --------------------------------------------------------
+        # TREATMENT MATCH
+        # --------------------------------------------------------
 
         treatment_match = (
             treatment in text
@@ -85,9 +115,9 @@ class MedicalDocumentAgent:
                 "in the medical document."
             )
 
-        # ---------------------------------------------------------
-        # 3. Possible pre-existing evidence
-        # ---------------------------------------------------------
+        # --------------------------------------------------------
+        # PRE-EXISTING / MEDICAL HISTORY DETECTION
+        # --------------------------------------------------------
 
         pre_existing_keywords = [
             "pre-existing",
@@ -102,11 +132,15 @@ class MedicalDocumentAgent:
             "previously diagnosed",
         ]
 
-        matched_pre_existing_terms = [
-            keyword
-            for keyword in pre_existing_keywords
-            if keyword in text
-        ]
+        matched_pre_existing_terms = []
+
+        for keyword in pre_existing_keywords:
+            if keyword in text:
+                if self._has_positive_history_evidence(
+                    text,
+                    keyword,
+                ):
+                    matched_pre_existing_terms.append(keyword)
 
         possible_pre_existing_evidence = (
             len(matched_pre_existing_terms) > 0
@@ -124,9 +158,9 @@ class MedicalDocumentAgent:
                 "human verification is required."
             )
 
-        # ---------------------------------------------------------
-        # 4. Previous treatment / consultation evidence
-        # ---------------------------------------------------------
+        # --------------------------------------------------------
+        # PREVIOUS TREATMENT DETECTION
+        # --------------------------------------------------------
 
         previous_treatment_keywords = [
             "previous treatment",
@@ -147,18 +181,18 @@ class MedicalDocumentAgent:
 
         if matched_previous_treatment_terms:
             evidence.append(
-                "The document contains references to "
-                "previous treatment or consultation."
+                "The document contains references to previous "
+                "treatment or consultation."
             )
 
             review_flags.append(
-                "Previous treatment history should be "
-                "verified against the policy terms."
+                "Previous treatment history should be verified "
+                "against the policy terms."
             )
 
-        # ---------------------------------------------------------
-        # 5. Document completeness
-        # ---------------------------------------------------------
+        # --------------------------------------------------------
+        # DOCUMENT LENGTH CHECK
+        # --------------------------------------------------------
 
         if len(document_text.strip()) < 50:
             review_flags.append(
@@ -166,18 +200,18 @@ class MedicalDocumentAgent:
                 "for reliable automated analysis."
             )
 
-        # ---------------------------------------------------------
-        # 6. Final status
-        # ---------------------------------------------------------
+        # --------------------------------------------------------
+        # DOCUMENT STATUS
+        # --------------------------------------------------------
 
         if (
             diagnosis_match
             and treatment_match
             and not possible_pre_existing_evidence
+            and not matched_previous_treatment_terms
             and len(review_flags) == 0
         ):
             document_status = "SUFFICIENT_FOR_REVIEW"
-
         else:
             document_status = "NEEDS_REVIEW"
 
@@ -194,62 +228,3 @@ class MedicalDocumentAgent:
             "evidence": evidence,
             "review_flags": review_flags,
         }
-
-
-if __name__ == "__main__":
-
-    agent = MedicalDocumentAgent()
-
-    sample_document = """
-    Patient: John Doe
-
-    Diagnosis: Diabetes
-
-    Treatment: In-patient hospitalization.
-
-    Medical history:
-    Patient has a previous history of diabetes and was
-    receiving previous medication before the current admission.
-    """
-
-    result = agent.analyze_document(
-        document_text=sample_document,
-        claim_diagnosis="Diabetes",
-        treatment_type="In-patient hospitalization",
-    )
-
-    print()
-    print("Medical Document Analysis")
-    print("=" * 80)
-
-    print(
-        "Document Status:",
-        result["document_status"],
-    )
-
-    print(
-        "Diagnosis Match:",
-        result["diagnosis_match"],
-    )
-
-    print(
-        "Treatment Match:",
-        result["treatment_match"],
-    )
-
-    print(
-        "Possible Pre-existing Evidence:",
-        result["possible_pre_existing_evidence"],
-    )
-
-    print()
-    print("Evidence:")
-
-    for item in result["evidence"]:
-        print(f"- {item}")
-
-    print()
-    print("Review Flags:")
-
-    for flag in result["review_flags"]:
-        print(f"- {flag}")

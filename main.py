@@ -1,36 +1,32 @@
 from typing import Dict
+import time
 
 from fastapi import FastAPI, HTTPException
 
-from app.agents.decision_agent import DecisionAgent
-from app.agents.medical_document_agent import MedicalDocumentAgent
-
-from app.models.claim_models import (
-    ClaimCase,
-    ClaimDecision,
-)
+from app.models.claim_models import ClaimCase, ClaimDecision
+from app.workflow import ClaimDecisionWorkflow
 
 
 app = FastAPI(
     title="Aptino Claim Decision Engine",
     description=(
         "AI-assisted health insurance claim decision engine "
-        "using hybrid policy retrieval and medical document analysis."
+        "using hybrid policy retrieval, reranking, medical "
+        "document analysis, and a structured multi-agent workflow."
     ),
-    version="1.3.0",
+    version="1.4.0",
 )
 
 
 # ============================================================
-# AGENT INITIALIZATION
+# MULTI-AGENT WORKFLOW
 # ============================================================
 
-decision_agent = DecisionAgent()
-medical_document_agent = MedicalDocumentAgent()
+workflow = ClaimDecisionWorkflow()
 
 
 # ============================================================
-# ROOT ENDPOINT
+# ROOT
 # ============================================================
 
 @app.get("/")
@@ -56,130 +52,75 @@ def health_check() -> Dict[str, str]:
 # CLAIM ANALYSIS
 # ============================================================
 
-@app.post(
-    "/claims/analyze",
-    response_model=ClaimDecision,
-)
+@app.post("/analyze", response_model=ClaimDecision)
+@app.post("/claims/analyze", response_model=ClaimDecision)
 def analyze_claim(claim_case: ClaimCase) -> ClaimDecision:
+
+    start_time = time.perf_counter()
 
     try:
 
-        # ----------------------------------------------------
-        # 1. MEDICAL DOCUMENT ANALYSIS
-        # ----------------------------------------------------
+        # ------------------------------------------------------
+        # Prepare medical documents for the workflow
+        # ------------------------------------------------------
 
-        possible_pre_existing = False
-        medical_review_required = False
+        medical_documents = [
+            {
+                "document_id": document.document_id,
+                "document_type": document.document_type,
+                "document_text": document.document_text,
+            }
+            for document in claim_case.medical_documents
+        ]
 
-        medical_analysis_results = []
+        # ------------------------------------------------------
+        # Run structured multi-agent workflow
+        # ------------------------------------------------------
 
-        for document in claim_case.medical_documents:
-
-            medical_result = (
-                medical_document_agent.analyze_document(
-                    document_text=document.document_text,
-                    claim_diagnosis=(
-                        claim_case.claim.diagnosis
-                    ),
-                    treatment_type=(
-                        claim_case.claim.treatment_type
-                    ),
-                )
-            )
-
-            medical_analysis_results.append(
-                medical_result
-            )
-
-            if medical_result.get(
-                "possible_pre_existing_evidence",
-                False,
-            ):
-                possible_pre_existing = True
-
-            if medical_result.get(
-                "document_status"
-            ) == "NEEDS_REVIEW":
-
-                medical_review_required = True
-
-        # ----------------------------------------------------
-        # 2. DETERMINE PRE-EXISTING STATUS
-        # ----------------------------------------------------
-
-        if possible_pre_existing:
-            pre_existing_confirmed = True
-        else:
-            pre_existing_confirmed = None
-
-        # Previous insurance coverage information is not
-        # currently represented in the ClaimCase schema.
-        previous_coverage_verified = False
-
-        # ----------------------------------------------------
-        # 3. DECISION AGENT
-        # ----------------------------------------------------
-
-        result = decision_agent.make_decision(
-            claim_id=(
-                claim_case.claim.claim_id
-            ),
-
-            diagnosis=(
-                claim_case.claim.diagnosis
-            ),
-
-            treatment_type=(
-                claim_case.claim.treatment_type
-            ),
-
-            claimed_amount=(
-                claim_case.claim.claimed_amount
-            ),
-
+        workflow_state = workflow.run(
+            claim_id=claim_case.claim.claim_id,
+            diagnosis=claim_case.claim.diagnosis,
+            treatment_type=claim_case.claim.treatment_type,
+            claimed_amount=claim_case.claim.claimed_amount,
             continuous_coverage_months=(
                 claim_case.policy.continuous_coverage_months
             ),
+            medical_documents=medical_documents,
+            pre_existing_confirmed=None,
+            previous_coverage_verified=False,
+            experimental=claim_case.claim.experimental,
+        )
 
-            pre_existing_confirmed=(
-                pre_existing_confirmed
+        # ------------------------------------------------------
+        # Medical analysis information
+        # ------------------------------------------------------
+
+        medical_review_required = workflow_state.get(
+            "medical_review_required",
+            False,
+        )
+
+        possible_pre_existing = workflow_state.get(
+            "possible_pre_existing_evidence",
+            False,
+        )
+
+        # ------------------------------------------------------
+        # Findings
+        # ------------------------------------------------------
+
+        findings = [
+            f"Claim diagnosis: {claim_case.claim.diagnosis}",
+            f"Treatment type: {claim_case.claim.treatment_type}",
+            (
+                "Continuous coverage: "
+                f"{claim_case.policy.continuous_coverage_months} months"
             ),
-
-            previous_coverage_verified=(
-                previous_coverage_verified
-            ),
-
-            experimental=(
-                claim_case.claim.experimental
-            ),
-        )
-
-        # ----------------------------------------------------
-        # 4. STRUCTURED FINDINGS
-        # ----------------------------------------------------
-
-        findings = []
-
-        findings.append(
-            f"Claim diagnosis: "
-            f"{claim_case.claim.diagnosis}"
-        )
-
-        findings.append(
-            f"Treatment type: "
-            f"{claim_case.claim.treatment_type}"
-        )
-
-        findings.append(
-            f"Continuous coverage: "
-            f"{claim_case.policy.continuous_coverage_months} "
-            f"months"
-        )
+        ]
 
         if claim_case.claim.experimental:
             findings.append(
-                "Treatment is identified as experimental "
-                "or unproven."
+                "Treatment is identified as experimental or unproven."
             )
 
         if possible_pre_existing:
@@ -189,137 +130,146 @@ def analyze_claim(claim_case: ClaimCase) -> ClaimDecision:
             )
 
         if claim_case.medical_documents:
-
             findings.append(
                 f"{len(claim_case.medical_documents)} "
                 "medical document(s) analyzed."
             )
-
         else:
-
             findings.append(
                 "No medical documents were provided."
             )
 
-        # ----------------------------------------------------
-        # 5. MISSING EVIDENCE
-        # ----------------------------------------------------
+        if medical_review_required:
+            findings.append(
+                "Medical document analysis identified "
+                "information requiring human verification."
+            )
+
+        # ------------------------------------------------------
+        # Missing evidence
+        # ------------------------------------------------------
 
         missing_evidence = []
 
         if not claim_case.medical_documents:
-
             missing_evidence.append(
                 "Medical documentation"
             )
 
-        if not possible_pre_existing:
+        missing_evidence.append(
+            "Medical verification of pre-existing condition status"
+        )
 
-            missing_evidence.append(
-                "Medical verification of pre-existing "
-                "condition status"
-            )
-
-        if not previous_coverage_verified:
-
-            missing_evidence.append(
-                "Previous continuous insurance coverage "
-                "or portability information"
-            )
+        missing_evidence.append(
+            "Previous continuous insurance coverage "
+            "or portability information"
+        )
 
         if claim_case.claim.experimental:
-
             missing_evidence.append(
-                "Verification of the applicable policy "
-                "exclusion for experimental or unproven treatment"
+                "Verification of the applicable policy exclusion "
+                "for experimental or unproven treatment"
             )
 
-        # ----------------------------------------------------
-        # 6. LIMITATIONS
-        # ----------------------------------------------------
+        # ------------------------------------------------------
+        # Limitations
+        # ------------------------------------------------------
 
         limitations = [
             (
-                "The system provides a preliminary "
-                "AI-assisted claim assessment and does "
-                "not replace human claim review."
+                "The system provides a preliminary AI-assisted "
+                "claim assessment and does not replace human "
+                "claim review."
             ),
-
             (
-                "Medical document analysis is based on "
-                "the extracted document text provided "
-                "to the system."
+                "Medical document analysis is based on the "
+                "extracted document text provided to the system."
             ),
-
             (
                 "Previous insurance coverage or portability "
-                "information is not currently verified "
-                "automatically."
+                "information is not currently verified automatically."
             ),
         ]
 
-        # ----------------------------------------------------
-        # 7. PROCESSING TRACE
-        # ----------------------------------------------------
+        # ------------------------------------------------------
+        # Policy evidence
+        # ------------------------------------------------------
 
-        trace = [
-            "Claim case received",
-            "Medical documents analyzed",
-            "Policy evidence retrieved using "
-            "hybrid retrieval",
-            "Decision Agent evaluated claim "
-            "against retrieved policy evidence",
-            "Preliminary claim decision generated",
-        ]
+        policy_evidence = workflow_state.get(
+            "policy_evidence",
+            [],
+        )
 
-        # ----------------------------------------------------
-        # 8. MEDICAL REVIEW INFORMATION
-        # ----------------------------------------------------
+        # ------------------------------------------------------
+        # Execution trace
+        # ------------------------------------------------------
+
+        trace = workflow_state.get(
+            "trace",
+            [],
+        )
+
+        elapsed_time = time.perf_counter() - start_time
+
+        trace.append(
+            {
+                "agent": "System",
+                "action": "Completed claim analysis",
+                "retrieval_count": workflow_state.get(
+                    "retrieval_count",
+                    0,
+                ),
+                "validation_status": workflow_state.get(
+                    "validation_status",
+                    "NOT_RUN",
+                ),
+                "elapsed_time_seconds": round(
+                    elapsed_time,
+                    4,
+                ),
+            }
+        )
+
+        # ------------------------------------------------------
+        # Add medical review warning to reason
+        # ------------------------------------------------------
+
+        reason = workflow_state.get(
+            "reason",
+            "",
+        )
 
         if medical_review_required:
-
-            result["reason"] += (
-                " Medical document analysis also "
-                "identified information requiring "
-                "human verification."
+            reason += (
+                " Medical document analysis also identified "
+                "information requiring human verification."
             )
 
-        # ----------------------------------------------------
-        # 9. RETURN STRUCTURED RESPONSE
-        # ----------------------------------------------------
+        # ------------------------------------------------------
+        # Return structured API response
+        # ------------------------------------------------------
 
         return ClaimDecision(
-            claim_id=result["claim_id"],
-
-            decision=result["decision"],
-
-            approved_amount=(
-                result["approved_amount"]
-            ),
-
-            reason=result["reason"],
-
-            policy_evidence=(
-                result["policy_evidence"]
-            ),
-
-            confidence=result["confidence"],
-
+            claim_id=workflow_state["claim_id"],
+            decision=workflow_state["decision"],
+            approved_amount=workflow_state["approved_amount"],
+            reason=reason,
+            policy_evidence=policy_evidence,
+            confidence=workflow_state["confidence"],
             findings=findings,
-
             limitations=limitations,
-
             missing_evidence=missing_evidence,
-
             trace=trace,
         )
 
-    except Exception as error:
+    except ValueError as error:
+        raise HTTPException(
+            status_code=400,
+            detail=str(error),
+        )
 
+    except Exception as error:
         raise HTTPException(
             status_code=500,
-            detail=(
-                f"Claim analysis failed: "
-                f"{str(error)}"
-            ),
+            detail=f"Claim analysis failed: {str(error)}",
         )

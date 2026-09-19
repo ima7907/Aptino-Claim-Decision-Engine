@@ -8,12 +8,17 @@ class PolicyAnalysisAgent:
     """
     Agent responsible for finding relevant policy clauses
     related to a claim.
+
+    The agent retrieves policy evidence using the hybrid
+    BM25 + dense retrieval pipeline followed by reranking.
     """
 
     def __init__(self):
         print("Initializing Policy Analysis Agent...")
 
-        self.project_root = Path(__file__).resolve().parents[2]
+        self.project_root = Path(
+            __file__
+        ).resolve().parents[2]
 
         self.chunks_path = (
             self.project_root
@@ -33,6 +38,16 @@ class PolicyAnalysisAgent:
     ) -> Dict:
         """
         Analyze a claim by retrieving relevant policy clauses.
+
+        Retrieval pipeline:
+
+        BM25 + Dense
+            ↓
+        Reciprocal Rank Fusion
+            ↓
+        Policy-aware reranking
+            ↓
+        Evidence returned to Decision Agent
         """
 
         query = (
@@ -53,23 +68,77 @@ class PolicyAnalysisAgent:
         evidence: List[Dict] = []
 
         for result in results:
+
             evidence.append(
                 {
-                    "chunk_id": result.get("chunk_id"),
-                    "page_number": result.get("page_number"),
-                    "text": result.get("text", ""),
+                    "chunk_id": result.get(
+                        "chunk_id"
+                    ),
+
+                    "page_number": result.get(
+                        "page_number"
+                    ),
+
+                    "text": result.get(
+                        "text",
+                        "",
+                    ),
+
+                    # Use the reranked score as the
+                    # primary evidence relevance score.
                     "relevance_score": result.get(
+                        "rerank_score",
+                        result.get(
+                            "hybrid_score",
+                            0.0,
+                        ),
+                    ),
+
+                    # Preserve retrieval metadata
+                    # for traceability and evaluation.
+                    "bm25_rank": result.get(
+                        "bm25_rank"
+                    ),
+
+                    "dense_rank": result.get(
+                        "dense_rank"
+                    ),
+
+                    "bm25_score": result.get(
+                        "bm25_score",
+                        0.0,
+                    ),
+
+                    "dense_score": result.get(
+                        "dense_score",
+                        0.0,
+                    ),
+
+                    "hybrid_score": result.get(
                         "hybrid_score",
                         0.0,
+                    ),
+
+                    "rerank_score": result.get(
+                        "rerank_score",
+                        0.0,
+                    ),
+
+                    "rerank_rank": result.get(
+                        "rerank_rank"
                     ),
                 }
             )
 
         return {
             "query": query,
+
             "continuous_coverage_months": (
                 continuous_coverage_months
             ),
+
+            "retrieval_count": len(results),
+
             "evidence": evidence,
         }
 
@@ -86,35 +155,66 @@ if __name__ == "__main__":
     )
 
     print()
-    print("Policy Analysis Result")
-    print("=" * 80)
+    print(
+        "Policy Analysis Result"
+    )
+
+    print(
+        "=" * 80
+    )
 
     print("Query:")
-    print(result["query"])
+
+    print(
+        result["query"]
+    )
 
     print()
-    print("Evidence found:", len(result["evidence"]))
+
+    print(
+        "Evidence found:",
+        len(result["evidence"]),
+    )
+
     print()
 
     for evidence in result["evidence"]:
 
-        print("--- Evidence ---")
-
         print(
-            f"Chunk ID: {evidence['chunk_id']}"
+            "--- Evidence ---"
         )
 
         print(
-            f"Page: {evidence['page_number']}"
+            f"Chunk ID: "
+            f"{evidence['chunk_id']}"
         )
 
         print(
-            f"Relevance score: "
-            f"{evidence['relevance_score']:.6f}"
+            f"Page: "
+            f"{evidence['page_number']}"
         )
+
+        print(
+            f"Rerank rank: "
+            f"{evidence.get('rerank_rank')}"
+        )
+
+        print(
+            f"Rerank score: "
+            f"{evidence.get('rerank_score', 0.0):.6f}"
+        )
+
+        print(
+            f"Hybrid score: "
+            f"{evidence.get('hybrid_score', 0.0):.6f}"
+        )
+
+        print()
 
         print(
             evidence["text"][:500]
         )
 
-        print("-" * 80)
+        print(
+            "-" * 80
+        )
