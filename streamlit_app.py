@@ -2,130 +2,147 @@ import requests
 import streamlit as st
 
 
-API_URL = "http://127.0.0.1:8000/claims/analyze"
+# ============================================================
+# CONFIGURATION
+# ============================================================
 
+API_URL = "http://127.0.0.1:8000/analyze"
+
+
+# ============================================================
+# PAGE CONFIG
+# ============================================================
 
 st.set_page_config(
     page_title="Aptino Claim Decision Engine",
     page_icon="🏥",
-    layout="centered",
+    layout="wide",
 )
 
 
-st.title("🏥 Aptino Claim Decision Engine")
-st.write(
-    "Enter the patient, policy, and claim details "
-    "to receive a preliminary claim decision."
+# ============================================================
+# HEADER
+# ============================================================
+
+st.title("Aptino Claim Decision Engine")
+st.caption(
+    "AI-assisted health insurance claim analysis using "
+    "policy retrieval, reranking, medical document analysis, "
+    "and a structured multi-agent workflow."
 )
 
 
-st.header("Patient Information")
+# ============================================================
+# SIDEBAR
+# ============================================================
 
-patient_id = st.text_input(
+st.sidebar.header("Claim Information")
+
+patient_id = st.sidebar.text_input(
     "Patient ID",
-    value="PAT-001",
+    value="TEST001",
 )
 
-age = st.number_input(
-    "Patient Age",
+age = st.sidebar.number_input(
+    "Age",
     min_value=0,
     max_value=120,
-    value=45,
+    value=35,
 )
 
-gender = st.selectbox(
+gender = st.sidebar.selectbox(
     "Gender",
-    options=[
-        "Female",
-        "Male",
-        "Other",
-        "Prefer not to say",
-    ],
+    ["Female", "Male", "Other", "Not specified"],
 )
 
-
-st.header("Policy Information")
-
-policy_id = st.text_input(
+policy_id = st.sidebar.text_input(
     "Policy ID",
-    value="POL-001",
+    value="POL001",
 )
 
-policy_name = st.text_input(
+policy_name = st.sidebar.text_input(
     "Policy Name",
-    value="CSC Individual Health Insurance",
+    value="Test Health Policy",
 )
 
-policy_start_date = st.date_input(
-    "Policy Start Date",
-)
-
-continuous_coverage_months = st.number_input(
-    "Continuous Coverage Months",
+coverage_months = st.sidebar.number_input(
+    "Continuous Coverage (months)",
     min_value=0,
-    value=24,
+    value=14,
 )
 
-
-st.header("Claim Information")
-
-claim_id = st.text_input(
+claim_id = st.sidebar.text_input(
     "Claim ID",
-    value="CLM-001",
+    value="TEST-001",
 )
 
-diagnosis = st.text_input(
+diagnosis = st.sidebar.text_input(
     "Diagnosis",
-    value="Diabetes",
+    value="appendicitis",
 )
 
-treatment_type = st.text_input(
+treatment_type = st.sidebar.text_input(
     "Treatment Type",
-    value="In-patient hospitalization",
+    value="inpatient hospitalization",
 )
 
-claimed_amount = st.number_input(
+claimed_amount = st.sidebar.number_input(
     "Claimed Amount",
     min_value=0.0,
     value=50000.0,
-    step=1000.0,
 )
 
-hospitalization_days = st.number_input(
+hospitalization_days = st.sidebar.number_input(
     "Hospitalization Days",
     min_value=0,
-    value=5,
+    value=4,
+)
+
+experimental = st.sidebar.checkbox(
+    "Experimental Treatment",
+    value=False,
 )
 
 
-st.header("Medical Document")
+# ============================================================
+# MEDICAL DOCUMENT
+# ============================================================
 
-document_id = st.text_input(
-    "Document ID",
-    value="DOC-001",
-)
+st.subheader("Medical Document")
 
-document_type = st.text_input(
+document_type = st.selectbox(
     "Document Type",
-    value="Discharge Summary",
+    [
+        "discharge_summary",
+        "medical_report",
+        "hospital_bill",
+        "other",
+    ],
 )
 
 document_text = st.text_area(
-    "Medical Document Text",
+    "Paste medical document text",
     value=(
-        "Patient was admitted for diabetes-related "
-        "complications."
+        "Patient was admitted for appendicitis and underwent "
+        "inpatient treatment. No previous history of "
+        "appendicitis or related chronic condition was "
+        "documented."
     ),
-    height=150,
+    height=180,
 )
 
+
+# ============================================================
+# ANALYZE
+# ============================================================
 
 if st.button(
     "Analyze Claim",
     type="primary",
+    use_container_width=True,
 ):
 
-    claim_payload = {
+    payload = {
         "patient": {
             "patient_id": patient_id,
             "age": age,
@@ -134,10 +151,8 @@ if st.button(
         "policy": {
             "policy_id": policy_id,
             "policy_name": policy_name,
-            "policy_start_date": str(policy_start_date),
-            "continuous_coverage_months": (
-                continuous_coverage_months
-            ),
+            "policy_start_date": "2025-01-01",
+            "continuous_coverage_months": coverage_months,
         },
         "claim": {
             "claim_id": claim_id,
@@ -145,10 +160,11 @@ if st.button(
             "treatment_type": treatment_type,
             "claimed_amount": claimed_amount,
             "hospitalization_days": hospitalization_days,
+            "experimental": experimental,
         },
         "medical_documents": [
             {
-                "document_id": document_id,
+                "document_id": "DOC001",
                 "document_type": document_type,
                 "document_text": document_text,
             }
@@ -158,58 +174,120 @@ if st.button(
     with st.spinner("Analyzing claim..."):
 
         try:
+
             response = requests.post(
                 API_URL,
-                json=claim_payload,
+                json=payload,
                 timeout=120,
             )
 
-            if response.status_code == 200:
+            if response.status_code != 200:
+
+                st.error(
+                    f"API error: {response.status_code}"
+                )
+
+                st.code(response.text)
+
+            else:
 
                 result = response.json()
 
-                st.success("Claim analysis completed.")
+                # ------------------------------------------------
+                # DECISION
+                # ------------------------------------------------
 
-                st.subheader("Claim Decision")
+                st.subheader("Decision")
 
                 decision = result.get(
                     "decision",
-                    "UNKNOWN",
+                    "NEEDS_REVIEW",
                 )
 
                 if decision == "APPROVED":
-                    st.success(
-                        f"Decision: {decision}"
-                    )
+                    st.success(f"Decision: {decision}")
 
                 elif decision == "REJECTED":
-                    st.error(
-                        f"Decision: {decision}"
-                    )
+                    st.error(f"Decision: {decision}")
 
                 else:
-                    st.warning(
-                        f"Decision: {decision}"
+                    st.warning(f"Decision: {decision}")
+
+                col1, col2 = st.columns(2)
+
+                with col1:
+                    st.metric(
+                        "Confidence",
+                        f"{result.get('confidence', 0) * 100:.1f}%",
                     )
 
-                st.metric(
-                    "Approved Amount",
-                    f"₹{result.get('approved_amount', 0):,.2f}",
-                )
+                with col2:
+                    st.metric(
+                        "Approved Amount",
+                        f"{result.get('approved_amount', 0):,.2f}",
+                    )
 
-                st.metric(
-                    "Confidence",
-                    f"{result.get('confidence', 0) * 100:.1f}%",
-                )
-
-                st.subheader("Reason")
-
-                st.write(
+                st.info(
                     result.get(
                         "reason",
                         "No reason provided.",
                     )
                 )
+
+                # ------------------------------------------------
+                # FINDINGS
+                # ------------------------------------------------
+
+                st.subheader("Findings")
+
+                findings = result.get(
+                    "findings",
+                    [],
+                )
+
+                if findings:
+                    for item in findings:
+                        st.write(f"- {item}")
+                else:
+                    st.write("No findings reported.")
+
+                # ------------------------------------------------
+                # LIMITATIONS
+                # ------------------------------------------------
+
+                st.subheader("Limitations")
+
+                limitations = result.get(
+                    "limitations",
+                    [],
+                )
+
+                if limitations:
+                    for item in limitations:
+                        st.write(f"- {item}")
+                else:
+                    st.write("No limitations reported.")
+
+                # ------------------------------------------------
+                # MISSING EVIDENCE
+                # ------------------------------------------------
+
+                st.subheader("Missing Evidence")
+
+                missing = result.get(
+                    "missing_evidence",
+                    [],
+                )
+
+                if missing:
+                    for item in missing:
+                        st.write(f"- {item}")
+                else:
+                    st.write("No missing evidence identified.")
+
+                # ------------------------------------------------
+                # POLICY EVIDENCE
+                # ------------------------------------------------
 
                 st.subheader("Policy Evidence")
 
@@ -226,19 +304,10 @@ if st.button(
                     ):
 
                         with st.expander(
-                            f"Evidence {index} - "
-                            f"Page {item.get('page_number')}"
+                            f"Evidence {index} — "
+                            f"Page {item.get('page_number', 'N/A')} "
+                            f"— {item.get('chunk_id', 'N/A')}"
                         ):
-
-                            st.write(
-                                f"Chunk ID: "
-                                f"{item.get('chunk_id')}"
-                            )
-
-                            st.write(
-                                f"Relevance Score: "
-                                f"{item.get('relevance_score', 0):.6f}"
-                            )
 
                             st.write(
                                 item.get(
@@ -247,39 +316,78 @@ if st.button(
                                 )
                             )
 
-                else:
+                            st.caption(
+                                "Relevance score: "
+                                f"{item.get('relevance_score', 0):.4f}"
+                            )
 
-                    st.info(
-                        "No policy evidence was returned."
+                else:
+                    st.warning(
+                        "No policy evidence retrieved."
                     )
 
-            else:
+                # ------------------------------------------------
+                # EXECUTION TRACE
+                # ------------------------------------------------
 
-                st.error(
-                    f"API Error: {response.status_code}"
+                st.subheader("Execution Trace")
+
+                trace = result.get(
+                    "trace",
+                    [],
                 )
 
-                st.code(
-                    response.text
-                )
+                if trace:
+
+                    for step in trace:
+
+                        agent = step.get(
+                            "agent",
+                            "Unknown",
+                        )
+
+                        action = step.get(
+                            "action",
+                            "",
+                        )
+
+                        st.write(
+                            f"**{agent}** — {action}"
+                        )
+
+                        details = {
+                            key: value
+                            for key, value in step.items()
+                            if key not in {
+                                "agent",
+                                "action",
+                            }
+                        }
+
+                        if details:
+                            st.json(details)
+
+                else:
+                    st.write(
+                        "No execution trace available."
+                    )
 
         except requests.exceptions.ConnectionError:
 
             st.error(
-                "Could not connect to the FastAPI server. "
-                "Make sure Terminal 1 is running "
-                "uvicorn main:app --reload."
+                "Could not connect to the backend API. "
+                "Make sure Uvicorn is running on "
+                "http://127.0.0.1:8000."
             )
 
         except requests.exceptions.Timeout:
 
             st.error(
-                "The request took too long. "
-                "Please try again."
+                "The API request timed out."
             )
 
-        except Exception as error:
+        except Exception as exc:
 
             st.error(
-                f"Unexpected error: {str(error)}"
+                f"Unexpected error: {exc}"
             )
