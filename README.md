@@ -1,46 +1,81 @@
 # AI-Assisted Claim Decision Engine
 
-An AI-assisted insurance claim analysis and decision-support system built for the Aptino AI Engineer take-home assignment.
+An AI-assisted health insurance claim analysis and decision-support system developed for the Aptino AI Engineer take-home assignment.
+
+The system combines policy-document retrieval, hybrid search, deterministic reranking, medical-document analysis, specialized agents, structured workflow state, validation, citations, and abstention when the available evidence is insufficient.
+
+---
 
 ## Project Overview
 
-This project analyzes insurance claim cases using:
+The Claim Decision Engine analyzes structured insurance claim information together with medical-document text and retrieves relevant evidence from the insurance policy.
 
-- Policy document retrieval
-- Keyword retrieval
-- BM25 retrieval
-- Dense vector retrieval
-- Hybrid retrieval
-- Policy analysis
-- Claim decision logic
-- FastAPI backend
-- Streamlit frontend
+The system is designed to:
 
-The system retrieves relevant policy evidence and produces a claim decision with an explanation.
+- Retrieve relevant policy evidence
+- Combine sparse and dense retrieval
+- Apply deterministic reranking before decision reasoning
+- Analyze medical-document text
+- Detect information requiring human verification
+- Produce a structured claim decision
+- Cite retrieved policy evidence
+- Identify missing evidence
+- Abstain with `NEEDS_REVIEW` when evidence is insufficient
+- Validate the generated decision
+- Record an execution trace for the multi-agent workflow
+
+The system is intended as an AI-assisted decision-support tool and does not replace human claim review.
+
+---
 
 ## Architecture
 
 ```text
-Claim Input
-    |
-    v
-FastAPI / Streamlit
-    |
-    v
-Policy Analysis Agent
-    |
-    v
-Hybrid Retriever
-    |
-    +--> Keyword Retrieval
-    +--> BM25 Retrieval
-    +--> Dense Retrieval
-    |
-    v
-Relevant Policy Evidence
-    |
-    v
-Decision Agent
-    |
-    v
-Claim Decision
+                         Claim Input
+                             |
+                             v
+                    FastAPI / Streamlit
+                             |
+                             v
+                  Claim Decision Workflow
+                             |
+          +------------------+------------------+
+          |                  |                  |
+          v                  v                  v
+ MedicalDocumentAgent  PolicyAnalysisAgent  DecisionAgent
+          |                  |                  |
+          |                  v                  |
+          |            Hybrid Retriever         |
+          |                  |                  |
+          |        +---------+---------+         |
+          |        |         |         |         |
+          |     Keyword     BM25    Dense        |
+          |     Retrieval  Retrieval Retrieval   |
+          |        |         |         |          |
+          |        +---------+---------+          |
+          |                  |                    |
+          |                  v                    |
+          |             RRF Fusion                |
+          |                  |                    |
+          |                  v                    |
+          |              Reranking                |
+          |                  |                    |
+          |                  v                    |
+          |            Policy Evidence            |
+          |                  |                    |
+          +------------------+--------------------+
+                             |
+                             v
+                       Decision Logic
+                             |
+                             v
+                     ValidationAgent
+                             |
+                             v
+                    Structured Response
+                             |
+          +------------------+------------------+
+          |                  |                  |
+       Decision           Evidence           Trace
+       Findings           Citations        Validation
+       Limitations        Missing Evidence
