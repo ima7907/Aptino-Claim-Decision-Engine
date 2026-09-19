@@ -6,8 +6,7 @@ import streamlit as st
 # CONFIGURATION
 # ============================================================
 
-API_URL = "http://127.0.0.1:8000/analyze"
-
+API_URL = "https://aptino-claim-decision-engine.onrender.com/analyze"
 
 # ============================================================
 # PAGE CONFIG
